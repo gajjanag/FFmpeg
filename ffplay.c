@@ -1203,7 +1203,7 @@ static int video_open(VideoState *is, int force_set_video_mode, Frame *vp)
         do_exit(is);
     }
     if (!window_title)
-        window_title = input_filename;
+        window_title = is->filename;
     SDL_WM_SetCaption(window_title, window_title);
 
     is->width  = screen->w;
@@ -2864,7 +2864,7 @@ static int read_thread(void *arg)
     is->max_frame_duration = (ic->iformat->flags & AVFMT_TS_DISCONT) ? 10.0 : 3600.0;
 
     if (!window_title && (t = av_dict_get(ic->metadata, "title", NULL, 0)))
-        window_title = av_asprintf("%s - %s", t->value, input_filename);
+        window_title = av_asprintf("%s - %s", t->value, is->filename);
 
     /* if seeking requested, we execute it */
     if (start_time != AV_NOPTS_VALUE) {
@@ -2968,7 +2968,7 @@ static int read_thread(void *arg)
 #if CONFIG_RTSP_DEMUXER || CONFIG_MMSH_PROTOCOL
         if (is->paused &&
                 (!strcmp(ic->iformat->name, "rtsp") ||
-                 (ic->pb && !strncmp(input_filename, "mmsh:", 5)))) {
+                 (ic->pb && !strncmp(is->filename, "mmsh:", 5)))) {
             /* wait 10 ms to avoid trying to get another packet */
             /* XXX: horrible */
             SDL_Delay(10);
