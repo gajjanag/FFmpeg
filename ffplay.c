@@ -310,7 +310,9 @@ typedef struct VideoState {
 
 /* options specified by the user */
 static AVInputFormat *file_iformat;
-static const char *input_filename;
+static const char **input_filenames = NULL;
+static int nb_files = 0;
+static int file_index = 0;
 static const char *window_title;
 static int fs_screen_width;
 static int fs_screen_height;
@@ -360,6 +362,7 @@ static AVPacket flush_pkt;
 
 #define FF_ALLOC_EVENT   (SDL_USEREVENT)
 #define FF_QUIT_EVENT    (SDL_USEREVENT + 2)
+#define FF_NEXT_FILE_EVENT (SDL_USEREVENT + 4)
 
 static SDL_Surface *screen;
 
@@ -1151,6 +1154,7 @@ static void do_exit(VideoState *is)
 #if CONFIG_AVFILTER
     av_freep(&vfilters_list);
 #endif
+    av_freep(&input_filenames);
     avformat_network_deinit();
     if (show_status)
         printf("\n");
@@ -2799,6 +2803,7 @@ static int read_thread(void *arg)
     SDL_mutex *wait_mutex = SDL_CreateMutex();
     int scan_all_pmts_set = 0;
     int64_t pkt_ts;
+    int next_file = 0;
 
     memset(st_index, -1, sizeof(st_index));
     is->last_video_stream = is->video_stream = -1;
@@ -3040,8 +3045,12 @@ static int read_thread(void *arg)
             (!is->video_st || (is->viddec.finished == is->videoq.serial && frame_queue_nb_remaining(&is->pictq) == 0))) {
             if (loop != 1 && (!loop || --loop)) {
                 stream_seek(is, start_time != AV_NOPTS_VALUE ? start_time : 0, 0, 0);
-            } else if (autoexit) {
+            }
+            else if (autoexit || nb_files > 1) {
+                next_file = 1;
                 ret = AVERROR_EOF;
+                if (nb_files > 1)
+                    next_file = 1;
                 goto fail;
             }
         }
@@ -3105,8 +3114,7 @@ static int read_thread(void *arg)
 
     if (ret != 0) {
         SDL_Event event;
-
-        event.type = FF_QUIT_EVENT;
+        event.type = (next_file) ? FF_NEXT_FILE_EVENT : FF_QUIT_EVENT;
         event.user.data1 = is;
         SDL_PushEvent(&event);
     }
@@ -3317,6 +3325,7 @@ static void event_loop(VideoState *cur_stream)
 
     for (;;) {
         double x;
+        SDL_mutex *wait_mutex;
         refresh_loop_wait_event(cur_stream, &event);
         switch (event.type) {
         case SDL_KEYDOWN:
@@ -3326,8 +3335,32 @@ static void event_loop(VideoState *cur_stream)
             }
             switch (event.key.keysym.sym) {
             case SDLK_ESCAPE:
-            case SDLK_q:
+            case SDLK_z:
                 do_exit(cur_stream);
+                break;
+            case SDLK_q:
+            case FF_NEXT_FILE_EVENT:
+                if (file_index == nb_files)
+                    do_exit(cur_stream);
+                wait_mutex = SDL_CreateMutex();
+                if (!wait_mutex) {
+                    av_log(cur_stream, AV_LOG_FATAL, "Could not create mutex\n");
+                    do_exit(cur_stream);
+                }
+                else if (SDL_LockMutex(wait_mutex) == 0) {
+                    stream_close(cur_stream);
+                    cur_stream = stream_open(input_filenames[file_index], file_iformat);
+                    SDL_FillRect(screen, NULL, 0U);
+                    SDL_Flip(screen);
+                    video_open(cur_stream, 0, NULL);
+                    file_index++;
+                    SDL_UnlockMutex(wait_mutex);
+                }
+                else {
+                    av_log(cur_stream, AV_LOG_FATAL, "Could not lock mutex\n");
+                    do_exit(cur_stream);
+                }
+                SDL_DestroyMutex(wait_mutex);
                 break;
             case SDLK_f:
                 toggle_full_screen(cur_stream);
@@ -3574,15 +3607,10 @@ static int opt_show_mode(void *optctx, const char *opt, const char *arg)
 
 static void opt_input_file(void *optctx, const char *filename)
 {
-    if (input_filename) {
-        av_log(NULL, AV_LOG_FATAL,
-               "Argument '%s' provided as input filename, but '%s' was already specified.\n",
-                filename, input_filename);
-        exit(1);
-    }
+    GROW_ARRAY(input_filenames, nb_files);
     if (!strcmp(filename, "-"))
         filename = "pipe:";
-    input_filename = filename;
+    input_filenames[nb_files - 1] = filename;
 }
 
 static int opt_codec(void *optctx, const char *opt, const char *arg)
@@ -3745,7 +3773,7 @@ int main(int argc, char **argv)
 
     parse_options(NULL, argc, argv, options, opt_input_file);
 
-    if (!input_filename) {
+    if (!input_filenames[file_index]) {
         show_usage();
         av_log(NULL, AV_LOG_FATAL, "An input file must be specified\n");
         av_log(NULL, AV_LOG_FATAL,
@@ -3790,9 +3818,18 @@ int main(int argc, char **argv)
     av_init_packet(&flush_pkt);
     flush_pkt.data = (uint8_t *)&flush_pkt;
 
-    is = stream_open(input_filename, file_iformat);
-    if (!is) {
-        av_log(NULL, AV_LOG_FATAL, "Failed to initialize VideoState!\n");
+    while (file_index < nb_files) {
+        is = stream_open(input_filenames[file_index], file_iformat);
+        if (!is) {
+            av_log(NULL, AV_LOG_ERROR, "Failed to intialize VideoState for: %s!\n",input_filenames[file_index]);
+        }
+        file_index++;
+        if (is)
+            break;
+    }
+
+    if (!is && file_index == nb_files) {
+        av_log(NULL, AV_LOG_FATAL, "Failed to initialize VideoState for any file!\n");
         do_exit(NULL);
     }
 
