@@ -297,7 +297,7 @@ static void release_delayed_buffers(PerThreadContext *p)
         pthread_mutex_lock(&fctx->buffer_mutex);
 
         // fix extended data in case the caller screwed it up
-        av_assert0(p->avctx->codec_type == AVMEDIA_TYPE_VIDEO ||
+        av_assert0(p->avctx && p->avctx->codec_type == AVMEDIA_TYPE_VIDEO ||
                    p->avctx->codec_type == AVMEDIA_TYPE_AUDIO);
         f = &p->released_buffers[--p->num_released_buffers];
         f->extended_data = f->data;
