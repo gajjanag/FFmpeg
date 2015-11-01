@@ -19,11 +19,13 @@
  */
 
 #include <float.h>
+#include "libavutil/eval.h"
 #include "libavutil/opt.h"
 #include "libavutil/parseutils.h"
 #include "libavutil/avstring.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/avassert.h"
+#include "libavutil/internal.h"
 
 // FIXME those are internal headers, ffserver _really_ shouldn't use them
 #include "libavformat/ffm.h"
@@ -757,7 +759,7 @@ static int ffserver_parse_config_feed(FFServerConfig *config, const char *cmd,
         } else {
             WARNING("Truncate N syntax in configuration file is deprecated. "
                     "Use Truncate alone with no arguments.\n");
-            feed->truncate = strtod(arg, NULL);
+            feed->truncate = ff_rint64_clip(av_strtod(arg, NULL), INT_MIN, INT_MAX);
         }
     } else if (!av_strcasecmp(cmd, "FileMaxSize")) {
         char *p1;
@@ -765,22 +767,10 @@ static int ffserver_parse_config_feed(FFServerConfig *config, const char *cmd,
 
         ffserver_get_arg(arg, sizeof(arg), p);
         p1 = arg;
-        fsize = strtod(p1, &p1);
-        switch(av_toupper(*p1)) {
-        case 'K':
-            fsize *= 1024;
-            break;
-        case 'M':
-            fsize *= 1024 * 1024;
-            break;
-        case 'G':
-            fsize *= 1024 * 1024 * 1024;
-            break;
-        default:
+        fsize = av_strtod(p1, &p1);
+        if (!fsize || fabs(fsize) == HUGE_VAL)
             ERROR("Invalid file size: '%s'\n", arg);
-            break;
-        }
-        feed->feed_max_size = (int64_t)fsize;
+        feed->feed_max_size = ff_rint64_clip(fsize, INT64_MIN, INT64_MAX);
         if (feed->feed_max_size < FFM_PACKET_SIZE*4) {
             ERROR("Feed max file size is too small. Must be at least %d.\n",
                   FFM_PACKET_SIZE*4);
