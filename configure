@@ -359,6 +359,7 @@ Advanced options (experts only):
                            (faster, but may crash)
   --enable-memalign-hack   emulate memalign, interferes with memory debuggers
   --sws-max-filter-size=N  the max filter size swscale uses [$sws_max_filter_size_default]
+  --enable-cache           cache results of configure [no]
 
 Optimization options (experts only):
   --disable-asm            disable all assembly optimizations

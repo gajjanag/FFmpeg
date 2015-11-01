@@ -353,8 +353,6 @@ static int iec61883_read_header(AVFormatContext *context)
 
         /* Init HDV receive */
 
-        avformat_new_stream(context, NULL);
-
         dv->mpeg_demux = avpriv_mpegts_parse_open(context);
         if (!dv->mpeg_demux)
             goto fail;
