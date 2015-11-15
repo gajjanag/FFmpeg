@@ -101,6 +101,7 @@ int ffio_set_buf_size(AVIOContext *s, int buf_size);
  * within the current pos and pos+buf_size is possible.
  * Once the stream position moves outside this window this guarantee is lost.
  */
+av_warn_unused_result
 int ffio_ensure_seekback(AVIOContext *s, int64_t buf_size);
 
 int ffio_limit(AVIOContext *s, int size);
