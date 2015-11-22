@@ -49,7 +49,7 @@ static uint8_t do_chromakey_pixel(ChromakeyContext *ctx, uint8_t u[9], uint8_t v
         du = (int)u[i] - ctx->chromakey_uv[0];
         dv = (int)v[i] - ctx->chromakey_uv[1];
 
-        diff += sqrt((du * du + dv * dv) / (255.0 * 255.0));
+        diff += hypot(du, dv) / 255.0;
     }
 
     diff /= 9.0;
