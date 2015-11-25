@@ -537,7 +537,7 @@ static int modified_levinson_durbin(int *window, int window_entries,
         if (xx == 0.0)
             k = 0;
         else
-            k = (int)(floor(-xy/xx * (double)LATTICE_FACTOR / (double)(tap_quant[i]) + 0.5));
+            k = lrint(-xy/xx * LATTICE_FACTOR / tap_quant[i]);
 
         if (k > (LATTICE_FACTOR/tap_quant[i]))
             k = LATTICE_FACTOR/tap_quant[i];
