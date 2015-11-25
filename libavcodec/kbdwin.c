@@ -17,6 +17,7 @@
  */
 
 #include "libavutil/avassert.h"
+#include "libavutil/libm.h"
 #include "libavutil/mathematics.h"
 #include "libavutil/attributes.h"
 #include "kbdwin.h"
@@ -53,5 +54,5 @@ av_cold void ff_kbd_window_init_fixed(int32_t *window, float alpha, int n)
 
     ff_kbd_window_init(local_window, alpha, n);
     for (i = 0; i < n; i++)
-        window[i] = (int)floor(2147483647.0 * local_window[i] + 0.5);
+        window[i] = lrint(2147483647.0 * local_window[i]);
 }
