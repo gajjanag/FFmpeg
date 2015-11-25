@@ -24,6 +24,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "libavutil/libm.h"
 #include "libavutil/mathematics.h"
 
 #define BITS 17
@@ -40,10 +41,9 @@ static int clip_f15(int v)
 static void printval(double val, int fixed)
 {
     if (fixed) {
-        /* lrint() isn't always available, so round and cast manually. */
         double new_val = val * (double) (1 << 15);
 
-        new_val = new_val >= 0 ? floor(new_val + 0.5) : ceil(new_val - 0.5);
+        new_val = rint(new_val);
 
         printf(" "FIXEDFMT",", clip_f15((long int) new_val));
     } else {
