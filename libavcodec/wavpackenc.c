@@ -959,7 +959,7 @@ static void analyze_mono(WavPackEncodeContext *s, int32_t *samples, int do_sampl
     memcpy(s->sampleptrs[info.nterms + 1][0], s->sampleptrs[i][0], s->block_samples * 4);
 
     if (s->extra_flags & EXTRA_BRANCHES)
-        recurse_mono(s, &info, 0, (int) floor(s->delta_decay + 0.5),
+        recurse_mono(s, &info, 0, lrint(s->delta_decay),
                      log2mono(s->sampleptrs[0][0], s->block_samples, 0));
 
     if (s->extra_flags & EXTRA_SORT_FIRST)
@@ -1778,7 +1778,7 @@ static void analyze_stereo(WavPackEncodeContext *s,
     memcpy(s->sampleptrs[info.nterms + 1][1], s->sampleptrs[i][1], s->block_samples * 4);
 
     if (s->extra_flags & EXTRA_BRANCHES)
-        recurse_stereo(s, &info, 0, (int) floor(s->delta_decay + 0.5),
+        recurse_stereo(s, &info, 0, lrint(s->delta_decay),
                        log2stereo(s->sampleptrs[0][0], s->sampleptrs[0][1],
                                   s->block_samples, 0));
 
