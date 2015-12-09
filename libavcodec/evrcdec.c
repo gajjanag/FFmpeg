@@ -681,7 +681,7 @@ static void frame_erasure(EVRCContext *e, float *samples)
         for (i = 0; i < NB_SUBFRAMES; i++)
             sum += evrc_energy_quant[e->prev_energy_gain][i];
         sum /= (float) NB_SUBFRAMES;
-        sum  = pow(10, sum);
+        sum  = powf(10, sum);
         for (i = 0; i < NB_SUBFRAMES; i++)
             e->energy_vector[i] = sum;
     }
@@ -834,7 +834,7 @@ static int evrc_decode_frame(AVCodecContext *avctx, void *data,
 
         /* Decode frame energy vectors as per TIA/IS-127 5.7.2 */
         for (i = 0; i < NB_SUBFRAMES; i++)
-            e->energy_vector[i] = pow(10, evrc_energy_quant[e->frame.energy_gain][i]);
+            e->energy_vector[i] = powf(10, evrc_energy_quant[e->frame.energy_gain][i]);
         e->prev_energy_gain = e->frame.energy_gain;
     }
 
