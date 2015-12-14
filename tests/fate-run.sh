@@ -360,7 +360,7 @@ if test $err != 0 && test $gen != "no" ; then
 fi
 
 if test $err = 0; then
-    rm -f $outfile $errfile $cmpfile $cleanfiles
+    rm -f $outfile $cmpfile $cleanfiles
 elif test $gen = "no"; then
     echo "Test $test failed. Look at $errfile for details."
     test "${V:-0}" -gt 0 && cat $errfile

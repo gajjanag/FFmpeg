@@ -118,14 +118,12 @@ static double bessel(double x) {
         1.0,
     };
     double y, r, factor;
-    if (x == 0)
-        return 1.0;
-    x = fabs(x);
     if (x <= 15) {
         y = x * x;
         return eval_poly(p1, FF_ARRAY_ELEMS(p1), y) / eval_poly(q1, FF_ARRAY_ELEMS(q1), y);
     }
     else {
+        x = fabs(x);
         y = 1 / x - 1.0 / 15;
         r = eval_poly(p2, FF_ARRAY_ELEMS(p2), y) / eval_poly(q2, FF_ARRAY_ELEMS(q2), y);
         factor = exp(x) / sqrt(x);
