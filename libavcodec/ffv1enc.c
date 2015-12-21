@@ -29,6 +29,7 @@
 #include "libavutil/avassert.h"
 #include "libavutil/crc.h"
 #include "libavutil/opt.h"
+#include "libavutil/internal.h"
 #include "libavutil/imgutils.h"
 #include "libavutil/pixdesc.h"
 #include "libavutil/timer.h"
@@ -966,7 +967,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
                         if (a+b)
                             p = 256.0 * b / (a + b);
                         s->initial_states[i][jp][k] =
-                            best_state[av_clip(round(p), 1, 255)][av_clip_uint8((a + b) / gob_count)];
+                            best_state[av_clip(lrint(p), 1, 255)][av_clip_uint8((a + b) / gob_count)];
                         for(jp++; jp<j; jp++)
                             s->initial_states[i][jp][k] = s->initial_states[i][jp-1][k];
                         a=b=0;
@@ -977,7 +978,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
                         p = 256.0 * b / (a + b);
                     }
                     s->initial_states[i][j][k] =
-                        best_state[av_clip(round(p), 1, 255)][av_clip_uint8((a + b) / gob_count)];
+                        best_state[av_clip(lrint(p), 1, 255)][av_clip_uint8((a + b) / gob_count)];
                 }
             }
         }
