@@ -51,9 +51,17 @@ av_cold void ff_atrac_generate_tables(void)
     float s;
 
     /* Generate scale factors */
-    if (!ff_atrac_sf_table[63])
-        for (i=0 ; i<64 ; i++)
-            ff_atrac_sf_table[i] = pow(2.0, (i - 15) / 3.0);
+    /* ff_atrac_sf_table[i] = 2^((i-15)/3) for 0 <= i < 64 */
+    /* 2^(i/3) for 0 <= i < 2 */
+    static const float exp2_lut[] = { 1.f, 1.2599210498948732f, 1.5874010519681994f };
+    if (!ff_atrac_sf_table[63]) {
+        float exp2_base = 1.0/32;
+        for(int i = 0; i < 64; ++i) {
+            ff_atrac_sf_table[i] = exp2_base * exp2_lut[i % 3];
+            if (i % 3 == 2)
+                exp2_base *= 2;
+        }
+    }
 
     /* Generate the QMF window. */
     if (!qmf_window[47])
