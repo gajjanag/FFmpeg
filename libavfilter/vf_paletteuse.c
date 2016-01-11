@@ -525,7 +525,13 @@ static int disp_tree(const struct color_node *node, const char *fname)
     av_bprintf(&buf, "}\n");
 
     fwrite(buf.str, 1, buf.len, f);
-    fclose(f);
+    if (fclose(f)) {
+        int ret = AVERROR(errno);
+        av_log(NULL, AV_LOG_ERROR,
+               "Unable to close file '%s', loss of information possible: %s\n",
+               fname, av_err2str(AVERROR(errno)));
+        return ret;
+    }
     av_bprint_finalize(&buf, NULL);
     return 0;
 }
