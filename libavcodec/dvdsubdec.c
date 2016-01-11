@@ -686,7 +686,8 @@ static int parse_ifo_palette(DVDSubContext *ctx, char *p)
         ret = AVERROR_INVALIDDATA;
     }
 end:
-    fclose(ifo);
+    if (fclose(ifo))
+        av_log(ctx, AV_LOG_WARNING, "Unable to close IFO file \"%s\": %s\n", p, av_err2str(AVERROR(errno)));
     return ret;
 }
 
