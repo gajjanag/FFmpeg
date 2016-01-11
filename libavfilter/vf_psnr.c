@@ -339,7 +339,10 @@ static av_cold void uninit(AVFilterContext *ctx)
     ff_dualinput_uninit(&s->dinput);
 
     if (s->stats_file && s->stats_file != stdout)
-        fclose(s->stats_file);
+        if (fclose(s->stats_file))
+            av_log(NULL, AV_LOG_ERROR,
+                   "Unable to close file '%s', loss of information possible: %s\n",
+                   s->stats_file_str, av_err2str(AVERROR(errno)));
 }
 
 static const AVFilterPad psnr_inputs[] = {
