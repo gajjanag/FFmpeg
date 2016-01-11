@@ -228,7 +228,9 @@ static int config_input(AVFilterLink *inlink)
             }
         }
     }
-    fclose(f);
+    if (fclose(f))
+        av_log(ctx, AV_LOG_WARNING, "cannot close input file '%s': %s\n",
+               tc->input, av_err2str(AVERROR(errno)));
 
     if (vsPreprocessTransforms(td, &tc->trans) != VS_OK) {
         av_log(ctx, AV_LOG_ERROR, "error while preprocessing transforms\n");
