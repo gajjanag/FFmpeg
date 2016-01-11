@@ -75,7 +75,10 @@ static av_cold void uninit(AVFilterContext *ctx)
     VSMotionDetect *md = &(s->md);
 
     if (s->f) {
-        fclose(s->f);
+        if (fclose(s->f))
+            av_log(ctx, AV_LOG_ERROR,
+                   "Unable to close transform file, loss of information possible: %s\n",
+                   av_err2str(AVERROR(errno)));
         s->f = NULL;
     }
 
