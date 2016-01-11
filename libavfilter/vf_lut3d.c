@@ -602,7 +602,8 @@ static av_cold int lut3d_init(AVFilterContext *ctx)
     }
 
 end:
-    fclose(f);
+    if(fclose(f))
+        av_log(ctx, AV_LOG_WARNING, "%s: %s\n", lut3d->file, av_err2str(AVERROR(errno)));
     return ret;
 }
 
