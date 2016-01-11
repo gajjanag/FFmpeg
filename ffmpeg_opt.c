@@ -2728,7 +2728,10 @@ static int opt_preset(void *optctx, const char *opt, const char *arg)
         }
     }
 
-    fclose(f);
+    if (fclose(f))
+        av_log(NULL, AV_LOG_ERROR,
+               "Error closing preset file: %s\n",
+               av_err2str(AVERROR(errno)));
 
     return 0;
 }
