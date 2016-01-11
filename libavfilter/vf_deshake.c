@@ -422,8 +422,12 @@ static av_cold void uninit(AVFilterContext *ctx)
     av_frame_free(&deshake->ref);
     av_freep(&deshake->angles);
     deshake->angles_size = 0;
-    if (deshake->fp)
-        fclose(deshake->fp);
+    if (deshake->fp) {
+        if (fclose(deshake->fp))
+            av_log(ctx, AV_LOG_WARNING,
+                   "Unable to close motion search log \"%s\", loss of information possible: %s\n",
+                   deshake->filename, av_err2str(AVERROR(errno)));
+    }
 }
 
 static int filter_frame(AVFilterLink *link, AVFrame *in)
