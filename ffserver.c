@@ -1310,7 +1310,10 @@ static FFServerIPAddressACL* parse_dynamic_acl(FFServerStream *stream,
 
     acl = av_mallocz(sizeof(FFServerIPAddressACL));
     if (!acl) {
-        fclose(f);
+        if (fclose(f))
+            av_log(NULL, AV_LOG_WARNING,
+                   "Unable to close acl file '%s': %s\n",
+                   stream->dynamic_acl, av_err2str(AVERROR(errno)));
         return NULL;
     }
 
@@ -1328,7 +1331,10 @@ static FFServerIPAddressACL* parse_dynamic_acl(FFServerStream *stream,
             ffserver_parse_acl_row(NULL, NULL, acl, p, stream->dynamic_acl,
                                    line_num);
     }
-    fclose(f);
+    if (fclose(f))
+            av_log(NULL, AV_LOG_WARNING,
+                   "Unable to close acl file '%s': %s\n",
+                   stream->dynamic_acl, av_err2str(AVERROR(errno)));
     return acl;
 }
 
@@ -2076,7 +2082,10 @@ static void compute_status(HTTPContext *c)
                                          "Total time used %s.\n",
                                      cpuperc, cpuused);
                      }
-                     fclose(pid_stat);
+                     if (fclose(pid_stat))
+                        av_log(NULL, AV_LOG_WARNING,
+                               "Unable to close pid stat '%s': %s\n",
+                               ps_cmd, av_err2str(AVERROR(errno)));
                  }
             }
 #endif
