@@ -403,7 +403,10 @@ static int ffserver_opt_preset(const char *arg, int type, FFServerConfig *config
             break;
     }
 
-    fclose(f);
+    if (fclose(f))
+        av_log(NULL, AV_LOG_WARNING,
+               "Unable to close preset file '%s': %s\n",
+               filename, av_err2str(AVERROR(errno)));
 
     return ret;
 }
@@ -1283,7 +1286,10 @@ int ffserver_parse_ffconfig(const char *filename, FFServerConfig *config)
         ERROR("Missing closing </%s> tag\n",
               stream ? "Stream" : (feed ? "Feed" : "Redirect"));
 
-    fclose(f);
+    if (fclose(f))
+        av_log(NULL, AV_LOG_WARNING,
+               "Unable to close config file '%s': %s\n",
+               filename, av_err2str(AVERROR(errno)));
     if (ret < 0)
         return ret;
     if (config->errors)
