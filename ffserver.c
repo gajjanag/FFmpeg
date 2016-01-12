@@ -2072,6 +2072,8 @@ static void compute_status(HTTPContext *c)
                          "ps -o \"%%cpu,cputime\" --no-headers %"PRId64"",
                          (int64_t) stream->pid);
 
+                 /* reset errno before trying popen */
+                 errno = 0;
                  pid_stat = popen(ps_cmd, "r");
                  if (pid_stat) {
                      char cpuperc[10];
@@ -2087,6 +2089,15 @@ static void compute_status(HTTPContext *c)
                                "Unable to close pid stat '%s': %s\n",
                                ps_cmd, av_err2str(AVERROR(errno)));
                  }
+                 else if (errno)
+                     av_log(NULL, AV_LOG_WARNING,
+                            "Unable to open pid stat '%s': %s\n",
+                            ps_cmd, av_err2str(AVERROR(errno)));
+                 else
+                     av_log(NULL, AV_LOG_WARNING,
+                            "Unable to open pid stat '%s': %s\n",
+                            ps_cmd, av_err2str(AVERROR(ENOMEM)));
+
             }
 #endif
 
