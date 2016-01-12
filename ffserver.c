@@ -2072,31 +2072,31 @@ static void compute_status(HTTPContext *c)
                          "ps -o \"%%cpu,cputime\" --no-headers %"PRId64"",
                          (int64_t) stream->pid);
 
-                 /* reset errno before trying popen */
-                 errno = 0;
-                 pid_stat = popen(ps_cmd, "r");
-                 if (pid_stat) {
-                     char cpuperc[10];
-                     char cpuused[64];
+                /* reset errno before trying popen */
+                errno = 0;
+                pid_stat = popen(ps_cmd, "r");
+                if (pid_stat) {
+                    char cpuperc[10];
+                    char cpuused[64];
 
-                     if (fscanf(pid_stat, "%9s %63s", cpuperc, cpuused) == 2) {
-                         avio_printf(pb, "Currently using %s%% of the cpu. "
-                                         "Total time used %s.\n",
-                                     cpuperc, cpuused);
-                     }
-                     if (fclose(pid_stat))
+                    if (fscanf(pid_stat, "%9s %63s", cpuperc, cpuused) == 2) {
+                        avio_printf(pb, "Currently using %s%% of the cpu. "
+                                        "Total time used %s.\n",
+                                    cpuperc, cpuused);
+                    }
+                    if (fclose(pid_stat))
                         av_log(NULL, AV_LOG_WARNING,
                                "Unable to close pid stat '%s': %s\n",
                                ps_cmd, av_err2str(AVERROR(errno)));
-                 }
-                 else if (errno)
-                     av_log(NULL, AV_LOG_WARNING,
-                            "Unable to open pid stat '%s': %s\n",
-                            ps_cmd, av_err2str(AVERROR(errno)));
-                 else
-                     av_log(NULL, AV_LOG_WARNING,
-                            "Unable to open pid stat '%s': %s\n",
-                            ps_cmd, av_err2str(AVERROR(ENOMEM)));
+                }
+                else if (errno)
+                    av_log(NULL, AV_LOG_WARNING,
+                           "Unable to open pid stat '%s': %s\n",
+                           ps_cmd, av_err2str(AVERROR(errno)));
+                else
+                    av_log(NULL, AV_LOG_WARNING,
+                           "Unable to open pid stat '%s': %s\n",
+                           ps_cmd, av_err2str(AVERROR(ENOMEM)));
 
             }
 #endif
