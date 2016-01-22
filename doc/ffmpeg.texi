@@ -430,6 +430,7 @@ the encoding process. It is made of "@var{key}=@var{value}" lines. @var{key}
 consists of only alphanumeric characters. The last key of a sequence of
 progress information is always "progress".
 
+@anchor{stdin interaction}
 @item -stdin
 Enable interaction on standard input. On by default unless standard input is
 used as an input. To explicitly disable interaction you need to specify
@@ -1296,6 +1297,46 @@ ffmpeg -i input.ts -filter_complex \
 @end example
 (0x2d0, 0x2dc and 0x2ef are the MPEG-TS PIDs of respectively the video,
 audio and subtitles streams; 0:0, 0:3 and 0:7 would have worked too)
+
+@section Keyboard interaction
+
+When stdin interaction is enabled (default), the following keyboard input is
+recognized. For more information regarding stdin interaction, see
+@ref{stdin interaction,,the stdin and nostdin options of this manual}.
+
+@table @key
+
+@item q
+Quit.
+
+@item +
+Increase log verbosity.
+
+@item -
+Decrease log verbosity.
+
+@item s
+Toggle QP histogram display.
+
+@item h
+Dump packets/hex; press to cycle through the 3 states.
+
+@item c
+Prompt for and send command to first matching filter supporting it.
+
+@item C
+Prompt for and send command to all matching filters supporting it.
+
+@item d
+Accept subsequent entry up to carriage return as debug mode.
+
+@item D
+Cycle through available debug modes.
+
+@item ?
+Display help regarding keyboard interaction.
+
+@end table
 
 @section Preset files
 A preset file contains a sequence of @var{option}=@var{value} pairs,
