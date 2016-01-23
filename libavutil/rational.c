@@ -108,9 +108,9 @@ AVRational av_d2q(double d, int max)
     AVRational a;
     int exponent;
     int64_t den;
-    if (isnan(d))
+    if (av_unlikely(isnan(d)))
         return (AVRational) { 0,0 };
-    if (fabs(d) > INT_MAX + 3LL)
+    if (av_unlikely(fabs(d) > INT_MAX + 3LL))
         return (AVRational) { d < 0 ? -1 : 1, 0 };
     frexp(d, &exponent);
     exponent = FFMAX(exponent-1, 0);
