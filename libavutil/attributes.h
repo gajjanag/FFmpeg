@@ -58,6 +58,14 @@
 #    define av_warn_unused_result
 #endif
 
+#if AV_GCC_VERSION_AT_LEAST(3,0)
+#    define av_likely(x) __builtin_expect(!!(x), 1)
+#    define av_unlikely(x) __builtin_expect(!!(x), 0)
+#else
+#    define av_likely(x) (x)
+#    define av_unlikely(x) (x)
+#endif
+
 #if AV_GCC_VERSION_AT_LEAST(3,1)
 #    define av_noinline __attribute__((noinline))
 #elif defined(_MSC_VER)
