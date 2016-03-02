@@ -193,8 +193,27 @@ typedef struct TrellisPath {
 #define TRELLIS_STAGES 121
 #define TRELLIS_STATES (SCALE_MAX_DIFF+1)
 
+static inline int log2f_round(float x)
+{
+    int exp;
+    float norm = frexpf(x, &exp);
+    if (norm >= M_SQRT1_2)
+        return exp;
+    return exp-1;
+}
+
+static inline int log2f_ceil(float x)
+{
+    int exp;
+    float norm = frexpf(x, &exp);
+    if (norm > 0.5f)
+        return exp;
+    return exp-1;
+}
+
 static void set_special_band_scalefactors(AACEncContext *s, SingleChannelElement *sce)
 {
+#define SQR(a) ((a)*(a))
     int w, g;
     int prevscaler_n = -255, prevscaler_i = 0;
     int bands = 0;
@@ -204,10 +223,10 @@ static void set_special_band_scalefactors(AACEncContext *s, SingleChannelElement
             if (sce->zeroes[w*16+g])
                 continue;
             if (sce->band_type[w*16+g] == INTENSITY_BT || sce->band_type[w*16+g] == INTENSITY_BT2) {
-                sce->sf_idx[w*16+g] = av_clip(roundf(log2f(sce->is_ener[w*16+g])*2), -155, 100);
+                sce->sf_idx[w*16+g] = av_clip(log2f_round(SQR(sce->is_ener[w*16+g])), -155, 100);
                 bands++;
             } else if (sce->band_type[w*16+g] == NOISE_BT) {
-                sce->sf_idx[w*16+g] = av_clip(3+ceilf(log2f(sce->pns_ener[w*16+g])*2), -100, 155);
+                sce->sf_idx[w*16+g] = av_clip(3+log2f_ceil(SQR(sce->pns_ener[w*16+g])), -100, 155);
                 if (prevscaler_n == -255)
                     prevscaler_n = sce->sf_idx[w*16+g];
                 bands++;
@@ -270,7 +289,7 @@ static void search_for_quantizers_anmr(AVCodecContext *avctx, AACEncContext *s,
         int q0low  = q0;
         int q1high = q1;
         //minimum scalefactor index is when maximum nonzero coefficient after quantizing is not clipped
-        int qnrg = av_clip_uint8(log2f(sqrtf(qnrgf/qcnt))*4 - 31 + SCALE_ONE_POS - SCALE_DIV_512);
+        int qnrg = av_clip_uint8(log2f_round(SQR(qnrgf/qcnt)) - 31 + SCALE_ONE_POS - SCALE_DIV_512);
         q1 = qnrg + 30;
         q0 = qnrg - 30;
         if (q0 < q0low) {
@@ -408,7 +427,7 @@ static void search_for_quantizers_fast(AVCodecContext *avctx, AACEncContext *s,
                     sce->sf_idx[(w+w2)*16+g] = 218;
                     sce->zeroes[(w+w2)*16+g] = 1;
                 } else {
-                    sce->sf_idx[(w+w2)*16+g] = av_clip(SCALE_ONE_POS - SCALE_DIV_512 + log2f(band->threshold), 80, 218);
+                    sce->sf_idx[(w+w2)*16+g] = av_clip(SCALE_ONE_POS - SCALE_DIV_512 + log2f_round(band->threshold), 80, 218);
                     sce->zeroes[(w+w2)*16+g] = 0;
                 }
                 minq = FFMIN(minq, sce->sf_idx[(w+w2)*16+g]);
@@ -515,7 +534,7 @@ static void search_for_pns(AACEncContext *s, AVCodecContext *avctx, SingleChanne
             }
 
             pns_tgt_energy = sfb_energy*FFMIN(1.0f, spread*spread);
-            noise_sfi = av_clip(roundf(log2f(pns_tgt_energy)*2), -100, 155); /* Quantize */
+            noise_sfi = av_clip(log2f_round(SQR(pns_tgt_energy)), -100, 155); /* Quantize */
             noise_amp = -ff_aac_pow2sf_tab[noise_sfi + POW_SF2_ZERO];    /* Dequantize */
             if (prev != -1000) {
                 int noise_sfdiff = noise_sfi - prev + SCALE_DIFF_ZERO;
