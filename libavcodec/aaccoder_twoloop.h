@@ -120,12 +120,7 @@ static void search_for_quantizers_twoloop(AVCodecContext *avctx,
      * slower than rdlambda, as rdscale has due compensation with
      * noisy band depriorization below, whereas zeroing logic is rather dumb
      */
-    float zeroscale;
-    if (lambda > 120.f) {
-        zeroscale = av_clipf(sqrtf(sqrtf(120.f / lambda)), 0.0625f, 1.0f);
-    } else {
-        zeroscale = 1.f;
-    }
+    float zeroscale = av_clipf(sqrtf(sqrtf(120.f / lambda)), 0.0625f, 1.0f);
 
     if (s->psy.bitres.alloc >= 0) {
         /**
