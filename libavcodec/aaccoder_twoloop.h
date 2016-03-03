@@ -122,7 +122,7 @@ static void search_for_quantizers_twoloop(AVCodecContext *avctx,
      */
     float zeroscale;
     if (lambda > 120.f) {
-        zeroscale = av_clipf(powf(120.f / lambda, 0.25f), 0.0625f, 1.0f);
+        zeroscale = av_clipf(sqrtf(sqrtf(120.f / lambda)), 0.0625f, 1.0f);
     } else {
         zeroscale = 1.f;
     }
