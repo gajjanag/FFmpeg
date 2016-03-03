@@ -101,7 +101,7 @@ static void search_for_quantizers_twoloop(AVCodecContext *avctx,
      * applied based on lambda. Keep it real and modest, the loop
      * will take care of the rest, this just accelerates convergence
      */
-    float sfoffs = av_clipf(log2f(120.0f / lambda) * 4.0f, -5, 10);
+    int sfoffs;
 
     int fflag, minscaler, maxscaler, nminscaler;
     int its  = 0;
