@@ -318,11 +318,13 @@ static void search_for_quantizers_twoloop(AVCodecContext *avctx,
         for (g = 0;  g < sce->ics.num_swb; g++) {
             if (nzs[g] > 0) {
                 float cleanup_factor = ff_sqrf(av_clipf(start / (cutoff * 0.75f), 1.0f, 2.0f));
+                START_TIMER
                 float energy2uplim = find_form_factor(
                     sce->ics.group_len[w], sce->ics.swb_sizes[g],
                     uplims[w*16+g] / (nzs[g] * sce->ics.swb_sizes[w]),
                     sce->coeffs + start,
                     nzslope * cleanup_factor);
+                STOP_TIMER("find_form_factor")
                 energy2uplim *= de_psy_factor;
                 if (!(avctx->flags & CODEC_FLAG_QSCALE)) {
                     /** In ABR, we need to priorize less and let rate control do its thing */
