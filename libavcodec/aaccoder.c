@@ -531,7 +531,7 @@ static void search_for_pns(AACEncContext *s, AVCodecContext *avctx, SingleChanne
                 band = &s->psy.ch[s->cur_channel].psy_bands[(w+w2)*16+g];
                 for (i = 0; i < sce->ics.swb_sizes[g]; i+=2) {
                     double rnd[2];
-                    av_bmg_get(&s->lfg, rnd);
+                    av_gaussian_get(&s->rng, rnd, 2);
                     PNS[i+0] = (float)rnd[0];
                     PNS[i+1] = (float)rnd[1];
                 }

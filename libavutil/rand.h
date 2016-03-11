@@ -52,4 +52,14 @@ static inline uint64_t av_rand64_get(AVRAND64 *rng){
     return rng->state[1] + y;
 }
 
+/**
+ * Get numbers generated independently from a standard Gaussian distribution
+ * generator using the random numbers issued by lfg.
+ *
+ * @param len number of Gaussian samples
+ * @param out array where the generated samples are placed
+ * @param rng AVRAND64 structure holding the state of the rng
+ */
+void av_gaussian_get(AVRAND64 *rng, double *out, int len);
+
 #endif /* AVUTIL_RAND_H */
