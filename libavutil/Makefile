@@ -53,6 +53,7 @@ HEADERS = adler32.h                                                     \
           pixdesc.h                                                     \
           pixelutils.h                                                  \
           pixfmt.h                                                      \
+          rand.h                                                        \
           random_seed.h                                                 \
           rc4.h                                                         \
           replaygain.h                                                  \
@@ -130,6 +131,7 @@ OBJS = adler32.o                                                        \
        parseutils.o                                                     \
        pixdesc.o                                                        \
        pixelutils.o                                                     \
+       rand.o                                                           \
        random_seed.o                                                    \
        rational.o                                                       \
        reverse.o                                                        \
