@@ -204,6 +204,7 @@ TESTPROGS = adler32                                                     \
             parseutils                                                  \
             pixdesc                                                     \
             pixelutils                                                  \
+            rand                                                        \
             random_seed                                                 \
             rational                                                    \
             ripemd                                                      \

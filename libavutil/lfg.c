@@ -101,7 +101,7 @@ int main(void)
                    samp0,
                    samp1);
         }
-        /* TODO: add proper normality test */
+        /* proper normality testing done in lavu/rand.c */
         samp_mean /= 1000;
         samp_stddev /= 999;
         samp_stddev -= (1000.0/999.0)*samp_mean*samp_mean;

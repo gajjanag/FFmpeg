@@ -347,3 +347,96 @@ void av_gaussian_get(AVRAND64 *rng, double *out, int len)
     for (int i = 0; i < len; ++i)
         out[i] = ziggurat(rng);
 }
+
+#ifdef TEST
+#include "libm.h"
+#include "log.h"
+#include "timer.h"
+
+static inline int compare(const void *a, const void *b)
+{
+    double da = *(double *)a;
+    double db = *(double *)b;
+    if (da == db)
+        return 0;
+    if (da > db)
+        return 1;
+    return -1;
+}
+
+/* Gaussian cdf */
+static inline double phi(double x)
+{
+    return 0.5 + 0.5 * erf(x * M_SQRT1_2);
+}
+
+/* The Anderson-Darling test for normality for an array of iid samples with a
+ * fixed mean and stddev: https://en.wikipedia.org/wiki/Anderson%E2%80%93Darling_test.
+ * Note that no matter what we do, these tests are quite unsatisfying:
+ * https://stats.stackexchange.com/questions/2492/is-normality-testing-essentially-useless.
+ * Nevertheless, some testing is better than no testing, especially to guard
+ * against coding bugs. */
+static int is_normal(double *x, int len, double mu, double sigma)
+{
+    /* Somewhat arbitrarily use the 10% significance level */
+    double thresh = 1.933;
+    double a_squared = -len;
+    double a_incr = 0.0;
+    qsort(x, len, sizeof(*x), compare);
+    for (int i = 0; i < len; ++i) {
+        double y1 = (x[i]-mu)/sigma;
+        double y2 = (x[len-1-i]-mu)/sigma;
+        y1 = log(phi(y1));
+        y2 = log(1-phi(y2));
+        a_incr += (2*i+1)*(y1 + y2);
+    }
+    a_incr /= len;
+    a_squared -= a_incr;
+    if (a_squared > thresh) {
+        av_log(NULL, AV_LOG_ERROR, "Normality test failed!\n");
+        av_log(NULL, AV_LOG_ERROR, "a_squared: %lf > threshold: %lf\n", a_squared, thresh);
+        return 0;
+    }
+    return 1;
+}
+
+int main(void)
+{
+    uint64_t y = 0;
+    int i, j;
+    AVRAND64 state;
+
+    av_rand64_init(&state, UINT64_C(0xdeadbeefdeadbeef));
+
+    for (j = 0; j < 1000000; j++) {
+        START_TIMER
+        for (i = 0; i < 624; i++) {
+            y += av_rand64_get(&state);
+        }
+        STOP_TIMER("624 calls of av_rand64_get");
+    }
+
+    /* BMG usage example */
+    {
+        double mean   = 1000;
+        double stddev = 53;
+        int num_samples = 10000000;
+        double *samples = av_malloc(num_samples * sizeof(*samples));
+        if (!samples) {
+            av_log(NULL, AV_LOG_ERROR, "Out of memory!\n");
+            return 1;
+        }
+
+        av_rand64_init(&state, UINT64_C(0xdeadbeefdeadbeef));
+
+        av_log(NULL, AV_LOG_INFO, "Gaussian samples, mean %lf, stddev %lf\n", mean, stddev);
+        av_gaussian_get(&state, samples, num_samples);
+        for (i = 0; i < num_samples; i++) {
+            samples[i] *= stddev;
+            samples[i] += mean;
+        }
+        return !is_normal(samples, num_samples, mean, stddev);
+    }
+
+}
+#endif
