@@ -45,6 +45,7 @@
 #include "aacenc.h"
 #include "aacenctab.h"
 #include "aacenc_utils.h"
+#include "cbrt_data.h"
 
 #include "psymodel.h"
 
@@ -911,6 +912,7 @@ alloc_fail:
 static av_cold void aac_encode_init_tables(void)
 {
     ff_aac_tableinit();
+    ff_cbrt_tableinit();
 }
 
 static av_cold int aac_encode_init(AVCodecContext *avctx)

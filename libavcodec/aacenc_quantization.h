@@ -32,6 +32,7 @@
 #include "aacenc.h"
 #include "aacenctab.h"
 #include "aacenc_utils.h"
+#include "cbrt_data.h"
 
 /**
  * Calculate rate distortion cost for quantizing with given codebook
@@ -105,7 +106,7 @@ static av_always_inline float quantize_and_encode_band_cost_template(
                         curbits += 21;
                     } else {
                         int c = av_clip_uintp2(quant(t, Q, ROUNDING), 13);
-                        quantized = c*cbrtf(c)*IQ;
+                        quantized = av_int2float(ff_cbrt_tab[c])*IQ;
                         curbits += av_log2(c)*2 - 4 + 1;
                     }
                 } else {
