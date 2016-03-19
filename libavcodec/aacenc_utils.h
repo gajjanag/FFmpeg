@@ -62,18 +62,35 @@ static inline int quant(float coef, const float Q, const float rounding)
     return sqrtf(a * sqrtf(a)) + rounding;
 }
 
+static inline float minf(float x, float y) {
+    return x < y ? x : y;
+}
+
 static inline void quantize_bands(int *out, const float *in, const float *scaled,
                                   int size, float Q34, int is_signed, int maxval,
                                   const float rounding)
 {
-    int i;
-    for (i = 0; i < size; i++) {
-        float qc = scaled[i] * Q34;
-        int tmp = (int)FFMIN(qc + rounding, (float)maxval);
-        if (is_signed && in[i] < 0.0f) {
-            tmp = -tmp;
-        }
-        out[i] = tmp;
+    for (int i = 0; i < size; i+=4) {
+        float qc0 = scaled[i  ] * Q34;
+        float qc1 = scaled[i+1] * Q34;
+        float qc2 = scaled[i+2] * Q34;
+        float qc3 = scaled[i+3] * Q34;
+        int tmp0 = minf(qc0 + rounding, maxval);
+        int tmp1 = minf(qc1 + rounding, maxval);
+        int tmp2 = minf(qc2 + rounding, maxval);
+        int tmp3 = minf(qc3 + rounding, maxval);
+        if (is_signed && in[i  ] < 0.0f)
+            tmp0 = -tmp0;
+        if (is_signed && in[i+1] < 0.0f)
+            tmp1 = -tmp1;
+        if (is_signed && in[i+2] < 0.0f)
+            tmp2 = -tmp2;
+        if (is_signed && in[i+3] < 0.0f)
+            tmp3 = -tmp3;
+        out[i  ] = tmp0;
+        out[i+1] = tmp1;
+        out[i+2] = tmp2;
+        out[i+3] = tmp3;
     }
 }
 
