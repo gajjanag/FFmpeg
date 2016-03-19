@@ -37,18 +37,24 @@
 #define ROUND_TO_ZERO 0.1054f
 #define C_QUANT 0.4054f
 
-static inline void abs_pow34_v(float *out, const float *in, const int size)
-{
-    int i;
-    for (i = 0; i < size; i++) {
-        float a = fabsf(in[i]);
-        out[i] = sqrtf(a * sqrtf(a));
-    }
-}
-
 static inline float pos_pow34(float a)
 {
     return sqrtf(a * sqrtf(a));
+}
+
+static inline void abs_pow34_v(float *av_restrict out, const float *av_restrict in, const int size)
+{
+    av_assert2(!(size % 4));
+    for (int i = 0; i < size; i+=4) {
+        float a0 = fabsf(in[i]);
+        float a1 = fabsf(in[i+1]);
+        float a2 = fabsf(in[i+2]);
+        float a3 = fabsf(in[i+3]);
+        out[i  ] = pos_pow34(a0);
+        out[i+1] = pos_pow34(a1);
+        out[i+2] = pos_pow34(a2);
+        out[i+3] = pos_pow34(a3);
+    }
 }
 
 /**
