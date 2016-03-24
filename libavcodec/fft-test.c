@@ -253,7 +253,7 @@ int main(int argc, char **argv)
     DCTContext d;
 #if CONFIG_LIBFFTW3
     FFTWContext fftw;
-    FFTWComplex *tab_fftw;
+    FFTWComplex *tab_fftw, *tab_fftw_copy;
 #endif /* CONFIG_LIBFFTW3 */
 #endif /* FFT_FLOAT */
     int it, i, err = 1;
@@ -317,8 +317,9 @@ int main(int argc, char **argv)
     tab_ref  = av_malloc_array(fft_size, sizeof(FFTComplex));
     tab2     = av_malloc_array(fft_size, sizeof(FFTSample));
 #if CONFIG_LIBFFTW3 && FFT_FLOAT
-    tab_fftw = av_malloc_array(fft_size, sizeof(*tab_fftw));
-    if (!tab_fftw)
+    tab_fftw      = av_malloc_array(fft_size, sizeof(*tab_fftw));
+    tab_fftw_copy = av_malloc_array(fft_size, sizeof(*tab_fftw_copy));
+    if (!(tab_fftw && tab_fftw_copy))
         goto cleanup_fftw;
 #endif /* CONFIG_LIBFFTW3 */
 
@@ -394,6 +395,9 @@ int main(int argc, char **argv)
         tab_fftw[i][1] = tab1[i].im;
 #endif /* CONFIG_LIBFFTW3 */
     }
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+    memcpy(tab_fftw_copy, tab_fftw, fft_size * sizeof(*tab_fftw));
+#endif
 
     /* checking result */
     av_log(NULL, AV_LOG_INFO, "Checking...\n");
@@ -502,10 +506,12 @@ int main(int argc, char **argv)
                     break;
                 case TRANSFORM_FFT:
                     memcpy(tab, tab1, fft_size * sizeof(FFTComplex));
+                    s.fft_permute(&s, tab);
                     s.fft_calc(&s, tab);
                     break;
 #if CONFIG_LIBFFTW3 && FFT_FLOAT
                 case TRANSFORM_FFTW:
+                    memcpy(tab_fftw, tab_fftw_copy, fft_size * sizeof(*tab_fftw));
                     fftw.fft_calc(&fftw, tab_fftw);
                     break;
 #endif /* CONFIG_LIBFFTW3 */
@@ -527,7 +533,7 @@ int main(int argc, char **argv)
             nb_its *= 2;
         }
         av_log(NULL, AV_LOG_INFO,
-               "time: %0.1f us/transform [total time=%0.2f s its=%d]\n",
+               "time: %0.2f us/transform [total time=%0.2f s its=%d]\n",
                (double) duration / nb_its,
                (double) duration / 1000000.0,
                nb_its);
