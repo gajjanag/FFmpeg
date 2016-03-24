@@ -65,6 +65,7 @@ FFT-OBJS-$(CONFIG_HARDCODED_TABLES)    += cos_tables.o cos_fixed_tables.o
 OBJS-$(CONFIG_FFT)                     += avfft.o fft_fixed.o fft_float.o \
                                           fft_fixed_32.o fft_init_table.o \
                                           $(FFT-OBJS-yes)
+OBJS-$(CONFIG_LIBFFTW3)                += fftw.o
 OBJS-$(CONFIG_FLACDSP)                 += flacdsp.o
 OBJS-$(CONFIG_FMTCONVERT)              += fmtconvert.o
 OBJS-$(CONFIG_GOLOMB)                  += golomb.o
