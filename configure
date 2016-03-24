@@ -221,6 +221,7 @@ External library support:
                            and libraw1394 [no]
   --enable-libfaac         enable AAC encoding via libfaac [no]
   --enable-libfdk-aac      enable AAC de/encoding via libfdk-aac [no]
+  --enable-libfftw3        enable FFT computation via libfftw3 [no]
   --enable-libflite        enable flite (voice synthesis) support via libflite [no]
   --enable-libfreetype     enable libfreetype, needed for drawtext filter [no]
   --enable-libfribidi      enable libfribidi, improves drawtext filter [no]
@@ -1470,6 +1471,7 @@ EXTERNAL_LIBRARY_LIST="
     libdc1394
     libfaac
     libfdk_aac
+    libfftw3
     libflite
     libfontconfig
     libfreetype
@@ -4950,6 +4952,7 @@ die_license_disabled_gpl() {
 
 die_license_disabled gpl frei0r
 die_license_disabled gpl libcdio
+die_license_disabled gpl libfftw3
 die_license_disabled gpl librubberband
 die_license_disabled gpl libsmbclient
 die_license_disabled gpl libutvideo
@@ -5555,6 +5558,7 @@ enabled libfaac           && require2 libfaac "stdint.h faac.h" faacEncGetVersio
 enabled libfdk_aac        && { use_pkg_config fdk-aac "fdk-aac/aacenc_lib.h" aacEncOpen ||
                                { require libfdk_aac fdk-aac/aacenc_lib.h aacEncOpen -lfdk-aac &&
                                  warn "using libfdk without pkg-config"; } }
+enabled libfftw3          && require2 libfftw3f "fftw3.h" fftwf_execute -lfftw3f -lm
 flite_libs="-lflite_cmu_time_awb -lflite_cmu_us_awb -lflite_cmu_us_kal -lflite_cmu_us_kal16 -lflite_cmu_us_rms -lflite_cmu_us_slt -lflite_usenglish -lflite_cmulex -lflite"
 enabled libflite          && require2 libflite "flite/flite.h" flite_init $flite_libs
 enabled fontconfig        && enable libfontconfig
