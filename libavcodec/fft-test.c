@@ -43,7 +43,10 @@
 #if FFT_FLOAT
 #include "dct.h"
 #include "rdft.h"
-#endif
+#if CONFIG_LIBFFTW3
+#include "fftw.h"
+#endif /* CONFIG_LIBFFTW3 */
+#endif /* FFT_FLOAT */
 
 /* reference fft */
 
@@ -208,6 +211,7 @@ static int check_diff(FFTSample *tab1, FFTSample *tab2, int n, double scale)
             max = e;
     }
     av_log(NULL, AV_LOG_INFO, "max:%f e:%g\n", max, sqrt(error / n));
+
     return err;
 }
 
@@ -217,6 +221,7 @@ static void help(void)
            "usage: fft-test [-h] [-s] [-i] [-n b]\n"
            "-h     print this help\n"
            "-s     speed test\n"
+           "-t     FFTW test\n"
            "-m     (I)MDCT test\n"
            "-d     (I)DCT test\n"
            "-r     (I)RDFT test\n"
@@ -227,6 +232,7 @@ static void help(void)
 
 enum tf_transform {
     TRANSFORM_FFT,
+    TRANSFORM_FFTW,
     TRANSFORM_MDCT,
     TRANSFORM_RDFT,
     TRANSFORM_DCT,
@@ -245,6 +251,10 @@ int main(int argc, char **argv)
 #if FFT_FLOAT
     RDFTContext r;
     DCTContext d;
+#if CONFIG_LIBFFTW3
+    FFTWContext fftw;
+    FFTWComplex *tab_fftw;
+#endif /* CONFIG_LIBFFTW3 */
 #endif /* FFT_FLOAT */
     int it, i, err = 1;
     int do_speed = 0, do_inverse = 0;
@@ -255,7 +265,7 @@ int main(int argc, char **argv)
     av_lfg_init(&prng, 1);
 
     for (;;) {
-        int c = getopt(argc, argv, "hsimrdn:f:c:");
+        int c = getopt(argc, argv, "hsitmrdn:f:c:");
         if (c == -1)
             break;
         switch (c) {
@@ -268,6 +278,11 @@ int main(int argc, char **argv)
         case 'i':
             do_inverse = 1;
             break;
+#if CONFIG_LIBFFTW3
+        case 't':
+            transform = TRANSFORM_FFTW;
+            break;
+#endif /* CONFIG_LIBFFTW3 */
         case 'm':
             transform = TRANSFORM_MDCT;
             break;
@@ -301,6 +316,11 @@ int main(int argc, char **argv)
     tab1     = av_malloc_array(fft_size, sizeof(FFTComplex));
     tab_ref  = av_malloc_array(fft_size, sizeof(FFTComplex));
     tab2     = av_malloc_array(fft_size, sizeof(FFTSample));
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+    tab_fftw = av_malloc_array(fft_size, sizeof(*tab_fftw));
+    if (!tab_fftw)
+        goto cleanup_fftw;
+#endif /* CONFIG_LIBFFTW3 */
 
     if (!(tab && tab1 && tab_ref && tab2))
         goto cleanup;
@@ -325,6 +345,17 @@ int main(int argc, char **argv)
         if ((err = fft_ref_init(fft_nbits, do_inverse)) < 0)
             goto cleanup;
         break;
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+    case TRANSFORM_FFTW:
+        if (do_inverse)
+            av_log(NULL, AV_LOG_INFO, "IFFTW");
+        else
+            av_log(NULL, AV_LOG_INFO, "FFTW");
+        ff_fftw_init(&fftw, fft_size, do_inverse);
+        if ((err = fft_ref_init(fft_nbits, do_inverse)) < 0)
+            goto cleanup;
+        break;
+#endif /* CONFIG_LIBFFTW3 */
 #if FFT_FLOAT
 #    if CONFIG_RDFT
     case TRANSFORM_RDFT:
@@ -358,6 +389,10 @@ int main(int argc, char **argv)
     for (i = 0; i < fft_size; i++) {
         tab1[i].re = frandom(&prng);
         tab1[i].im = frandom(&prng);
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+        tab_fftw[i][0] = tab1[i].re;
+        tab_fftw[i][1] = tab1[i].im;
+#endif /* CONFIG_LIBFFTW3 */
     }
 
     /* checking result */
@@ -385,6 +420,17 @@ int main(int argc, char **argv)
         fft_ref(tab_ref, tab1, fft_nbits);
         err = check_diff(&tab_ref->re, &tab->re, fft_size * 2, 1.0);
         break;
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+    case TRANSFORM_FFTW:
+        fftw.fft_calc(&fftw, tab_fftw);
+        fft_ref(tab_ref, tab1, fft_nbits);
+        for (i = 0; i < fft_size; i++) {
+            tab[i].re = tab_fftw[i][0];
+            tab[i].im = tab_fftw[i][1];
+        }
+        err = check_diff(&tab_ref->re, &tab->re, fft_size * 2, 1.0);
+        break;
+#endif /* CONFIG_LIBFFTW3 */
 #if FFT_FLOAT
 #if CONFIG_RDFT
     case TRANSFORM_RDFT:
@@ -458,6 +504,11 @@ int main(int argc, char **argv)
                     memcpy(tab, tab1, fft_size * sizeof(FFTComplex));
                     s.fft_calc(&s, tab);
                     break;
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+                case TRANSFORM_FFTW:
+                    fftw.fft_calc(&fftw, tab_fftw);
+                    break;
+#endif /* CONFIG_LIBFFTW3 */
 #if FFT_FLOAT
                 case TRANSFORM_RDFT:
                     memcpy(tab2, tab1, fft_size * sizeof(FFTSample));
@@ -491,6 +542,11 @@ int main(int argc, char **argv)
     case TRANSFORM_FFT:
         ff_fft_end(&s);
         break;
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+    case TRANSFORM_FFTW:
+        ff_fftw_deinit(&fftw);
+        break;
+#endif /* CONFIG_LIBFFTW3 */
 #if FFT_FLOAT
 #    if CONFIG_RDFT
     case TRANSFORM_RDFT:
@@ -505,12 +561,16 @@ int main(int argc, char **argv)
 #endif /* FFT_FLOAT */
     }
 
+#if CONFIG_LIBFFTW3 && FFT_FLOAT
+cleanup_fftw:
+    av_freep(&tab_fftw);
+#endif /* CONFIG_LIBFFTW3 */
 cleanup:
-    av_free(tab);
-    av_free(tab1);
-    av_free(tab2);
-    av_free(tab_ref);
-    av_free(exptab);
+    av_freep(&tab);
+    av_freep(&tab1);
+    av_freep(&tab2);
+    av_freep(&tab_ref);
+    av_freep(&exptab);
 
     if (err)
         printf("Error: %d.\n", err);
